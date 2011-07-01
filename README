@@ -4,7 +4,7 @@ TclCloud v1.0
 Description 
 ------------------------------------------
 
-TclCloud is an opensource tcl interface to the Amamzon AWS webservices api that enabled cloud automation of most AWS products and operations. Example use cases include the following:
+TclCloud is an opensource tcl interface to the Amazon AWS webservices api that enabled cloud automation of most AWS products and operations. Example use cases include the following:
 
 	- starting and stopping EC2 instances
 	- attaching EBS volumes
