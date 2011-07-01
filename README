@@ -106,6 +106,16 @@ To send a request to the AWS endpoint:
 	api version - the api version for the specific product API. Leave blank for the default. 
 
 ------------------------------------------
+TODO
+------------------------------------------
+
+	- add support for S3, Cloudfront, Route53, Import/Export
+	- certify tcl 8.5, Windows and Mac
+	- incorporate XML results parser using tdom, to list and json
+	- more sample code
+	- add support for the Rackspace, vSphere, OpSource, etc. APIs
+
+------------------------------------------
 Samples
 ------------------------------------------
 
