@@ -1,0 +1,258 @@
+TclCloud v1.0 
+
+------------------------------------------
+Description 
+------------------------------------------
+
+TclCloud is an opensource tcl interface to the Amamzon AWS webservices api that enabled cloud automation of most AWS products and operations. Example use cases include the following:
+
+	- starting and stopping EC2 instances
+	- attaching EBS volumes
+	- creating and interfacing with SimpleDB and RDS instances
+	- managing EC2 Autoscale and Load Balancer configurations
+	- sending Simple Email Service messages
+	- creating, submitting and monitoring Elastic Map Reduce (Hadoop) jobs
+	- configuring VPC networks
+	- and so on ...
+
+For more information on the Amazon AWS cloud products, see:
+http://aws.amazon.com/products/
+
+------------------------------------------
+Repository and Download
+------------------------------------------
+
+https://github.com/cloudsidekick/tclcloud
+
+------------------------------------------
+Bug and Feature Requests
+------------------------------------------
+
+https://github.com/cloudsidekick/tclcloud/issues
+
+------------------------------------------
+How does it work? 
+------------------------------------------
+
+All of the Amazon Web Services features are managed through their APIs by connecting to "endpoints" and issuing either REST or SOAP web service calls. Most programming language SDKs provide an abstraction layer to these APIs. TclCloud opens up the AWS API to the TCL developer with minimal abstraction and does not require a new release to support new AWS features to existing products (which happens quite frequently). 
+
+Responses from the AWS endpoint are returned in pure xml format which are easily parsed using tdom.
+
+For more information on the AWS API documentation, see:
+http://aws.amazon.com/documentation/
+
+To try out TclCloud you must have an Amazon AWS account with an API access key and secret key. 
+
+Note: TclCloud was developed and tested on tcl 8.6 on linux. I plan to support tcl 8.5 with TclOO and test on Windows.
+
+
+------------------------------------------
+Installation
+------------------------------------------
+
+Requirements - tcl 8.6 on linux, tcllib, TclCurl
+
+Download the TclCloud from the Download button from the Git repository above. Unzip the contents into the lib/tclcloud directory in your tcl home directory. 
+Make sure you have tcllib and TclCurl installed too. 
+
+------------------------------------------
+Usage
+------------------------------------------
+
+To create a new connection object, substitute your AWS provided access key and secret key. The connection new object will not attempt to create a connection to AWS, it simply creates the connection object for use.
+
+::tclcloud::connection new <aws access key> <aws secret key>
+
+	aws access key - the AWS provided access key
+	aws secret key - the AWS provided secret key
+
+Example:
+
+set awsconn [::tclcloud::connection new MYACCESSKEYKJREKJ MYSECRETKEYLKJDLLKJSDDKJF]
+
+
+To send a request to the AWS endpoint:
+
+<AWS connection object> call_aws <product> <region> <action> <parameters> <api version>
+
+	product - the AWS product to manage, currently one of the following values: ec2 emr as rds sqs ses cw elb vpc iam ebs
+		ec2 - EC2
+		emr - Elastic MapReduce
+		as - AutoScale
+		rds - Relational Database Service
+		sqs - Simple Queue Service
+		ses - Simple Email Service
+		cw - CloudWatch
+		elb - Elastic Load Balancer
+		vpc - Virtual Private Cloud
+		iam - Identity and Access Management
+		ebs - Elastic Beanstalk
+		sns - Simple Notification Service
+		cfn - Cloudformation
+	
+	region - the AWS region to interact with. This is product specific, see the following link for which regions apply to what products. 
+		http://docs.amazonwebservices.com/general/latest/gr/index.html
+		
+		Currently one of the following values: us-east-1, us-west-1, eu-west-1, ap-southeast-1, ap-northeast-1 or leave blank for the default (typically us-east-1)
+
+	action - this will correspond with the specific product API operation or action.
+		Examples include:
+		AssociateAddress
+		CreateImage
+		GetAttributes
+		etc.
+	parameter - key / value pairs that will be passed to the API in a tcl list format.
+
+	api version - the api version for the specific product API. Leave blank for the default. 
+
+------------------------------------------
+Samples
+------------------------------------------
+
+To launch an Ubuntu instance, default region and api version:
+
+package require tclcloud
+
+set awsconn [::tclcloud::connection new MYACCESSKEYKJREKJ MYSECRETKEYLKJDLLKJSDDKJF4]
+
+set return_value [$awsconn call_aws ec2 {} RunInstances {ImageId ami-1aad5273 MinCount 1 MaxCount 1 KeyName CentiviaKey SecurityGroup.1 {MySQL intranet} InstanceType t1.micro Placement.AvailabilityZone us-east-1d} {}]
+
+puts $return_value
+
+<?xml version="1.0" encoding="UTF-8"?>
+<RunInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-05-15/">
+    <requestId>40bfb94e-ecb8-4f49-b6ee-24b37f94ba04</requestId>
+    <reservationId>r-0d3b3061</reservationId>
+    <ownerId>001825975926</ownerId>
+    <groupSet>
+        <item>
+            <groupId>sg-5aabe433</groupId>
+            <groupName>MySQL intranet</groupName>
+        </item>
+    </groupSet>
+    <instancesSet>
+        <item>
+            <instanceId>i-912f2bff</instanceId>
+            <imageId>ami-1aad5273</imageId>
+            <instanceState>
+                <code>0</code>
+                <name>pending</name>
+            </instanceState>
+            <privateDnsName/>
+            <dnsName/>
+            <reason/>
+            <keyName>CentiviaKey</keyName>
+            <amiLaunchIndex>0</amiLaunchIndex>
+            <productCodes/>
+            <instanceType>t1.micro</instanceType>
+            <launchTime>2011-07-01T03:40:13.000Z</launchTime>
+            <placement>
+                <availabilityZone>us-east-1d</availabilityZone>
+                <groupName/>
+                <tenancy>default</tenancy>
+            </placement>
+            <kernelId>aki-427d952b</kernelId>
+            <monitoring>
+                <state>disabled</state>
+            </monitoring>
+            <groupSet>
+                <item>
+                    <groupId>sg-5aabe433</groupId>
+                    <groupName>MySQL intranet</groupName>
+                </item>
+            </groupSet>
+            <stateReason>
+                <code>pending</code>
+                <message>pending</message>
+            </stateReason>
+            <rootDeviceType>ebs</rootDeviceType>
+            <rootDeviceName>/dev/sda1</rootDeviceName>
+            <blockDeviceMapping/>
+            <virtualizationType>paravirtual</virtualizationType>
+            <clientToken/>
+            <hypervisor>xen</hypervisor>
+        </item>
+    </instancesSet>
+</RunInstancesResponse>
+
+
+To get a list of my machine images, default region and api version:
+
+package require tclcloud
+
+set awsconn [::tclcloud::connection new MYACCESSKEYKJREKJ MYSECRETKEYLKJDLLKJSDDKJF]
+
+set return_value [$awsconn call_aws ec2 {} DescribeImages {Owner.1 self} {}]
+
+puts $return_value
+
+<DescribeImagesResponse xmlns="http://ec2.amazonaws.com/doc/2011-05-15/">
+    <requestId>c10b0d57-964c-452e-a2ca-77aa8c49a65c</requestId>
+    <imagesSet>
+        <item>
+            <imageId>ami-3012e159</imageId>
+            <imageLocation>001825975926/Windows IIS SQL Server Small</imageLocation>
+            <imageState>available</imageState>
+            <imageOwnerId>001825975926</imageOwnerId>
+            <isPublic>false</isPublic>
+            <architecture>x86_64</architecture>
+            <imageType>machine</imageType>
+            <platform>windows</platform>
+            <name>Windows IIS SQL Server Small</name>
+            <description>Windows IIS SQL Server Small</description>
+            <rootDeviceType>ebs</rootDeviceType>
+            <rootDeviceName>/dev/sda1</rootDeviceName>
+            <blockDeviceMapping>
+                <item>
+                    <deviceName>/dev/sda1</deviceName>
+                    <ebs>
+                        <snapshotId>snap-345e8058</snapshotId>
+                        <volumeSize>30</volumeSize>
+                        <deleteOnTermination>true</deleteOnTermination>
+                    </ebs>
+                </item>
+            </blockDeviceMapping>
+            <virtualizationType>hvm</virtualizationType>
+            <tagSet>
+                <item>
+                    <key>Name</key>
+                    <value>Windows 2008 64 Dev Instance</value>
+                </item>
+            </tagSet>
+            <hypervisor>xen</hypervisor>
+        </item>
+        <item>
+            <imageId>ami-40659629</imageId>
+            <imageLocation>001825975926/Informix Linux Dev</imageLocation>
+            <imageState>available</imageState>
+            <imageOwnerId>001825975926</imageOwnerId>
+            <isPublic>false</isPublic>
+            <architecture>i386</architecture>
+            <imageType>machine</imageType>
+            <name>Informix Linux Dev</name>
+            <description>Informix Linux Dev</description>
+            <rootDeviceType>ebs</rootDeviceType>
+            <rootDeviceName>/dev/sda1</rootDeviceName>
+            <blockDeviceMapping>
+                <item>
+                    <deviceName>/dev/sda1</deviceName>
+                    <ebs>
+                        <snapshotId>snap-182ef074</snapshotId>
+                        <volumeSize>10</volumeSize>
+                        <deleteOnTermination>true</deleteOnTermination>
+                    </ebs>
+                </item>
+            </blockDeviceMapping>
+            <virtualizationType>paravirtual</virtualizationType>
+            <tagSet>
+                <item>
+                    <key>Name</key>
+                    <value>Linux Informix</value>
+                </item>
+            </tagSet>
+            <hypervisor>xen</hypervisor>
+        </item>
+        <item>
+    </imagesSet>
+</DescribeImagesResponse>
+
