@@ -57,7 +57,7 @@ oo::class create tclcloud::connection {
 		dict set AWS_product sqs version default 2009-02-01
 		dict set AWS_product ses version default 2010-12-01
 		dict set AWS_product cw version default 2010-08-01
-		dict set AWS_product elb version default 2010-07-01
+		dict set AWS_product elb version default 2011-04-05
 		dict set AWS_product vpc version default 2010-11-15
 		dict set AWS_product iam version default 2010-05-08
 		dict set AWS_product sdb version default 2009-04-15
