@@ -49,7 +49,7 @@ oo::class create tclcloud::connection {
 		dict set AWS_address ec2 ap-southeast-1 address ec2.ap-southeast-1.amazonaws.com
 		dict set AWS_address ec2 ap-northeast-1 address ec2.ap-northeast-1.amazonaws.com
 		dict set AWS_product emr version default 2009-03-31
-		dict set AWS_product ec2 version default 2011-05-15
+		dict set AWS_product ec2 version default 2011-07-15
 		dict set AWS_product sns version default 2010-03-31
 		dict set AWS_product cfn version default 2010-05-15
 		dict set AWS_product as version default 2010-08-01
@@ -202,7 +202,7 @@ oo::class create tclcloud::connection {
 			set xamzn_header "AWS3-HTTPS AWSAccessKeyId=[dict get $AWS_info a_key],Algorithm=HmacSHA256,Signature=$signature"
 			lappend header "X-Amzn-Authorization: $xamzn_header"
 		} elseif {"$product" == "ses"} {
-			set date_header [clock format [clock seconds] -format "%a, %e %b %Y %H:%M:%S +0000"]
+			set date_header [clock format [clock seconds] -gmt 1 -format "%a, %e %b %Y %H:%M:%S +0000"]
 			lappend header "Date: $date_header"
 			set signature [my Sign_string $date_header]
 			set xamzn_header "AWS3-HTTPS AWSAccessKeyId=[dict get $AWS_info a_key],Algorithm=HmacSHA256,Signature=$signature"
