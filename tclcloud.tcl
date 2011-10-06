@@ -2,7 +2,7 @@ package provide tclcloud 1.0
 
 package require sha256
 package require base64
-#package require TclOO
+package require TclOO
 package require TclCurl
 
 oo::class create tclcloud::connection {
