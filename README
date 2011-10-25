@@ -1,10 +1,13 @@
-TclCloud v1.0 
+TclCloud v1.0.1
 
 ------------------------------------------
 Description 
 ------------------------------------------
 
-TclCloud is an opensource tcl interface to the Amazon AWS webservices api that enabled cloud automation of most AWS products and operations. Example use cases include the following:
+TclCloud is an opensource tcl interface to the Amazon AWS and Eucalyptus webservices apis that enable 
+cloud automation of most of the AWS products and operations. 
+
+Example use cases include the following:
 
 	- starting and stopping EC2 instances
 	- attaching EBS volumes
@@ -17,6 +20,9 @@ TclCloud is an opensource tcl interface to the Amazon AWS webservices api that e
 
 For more information on the Amazon AWS cloud products, see:
 http://aws.amazon.com/products/
+
+Eucalyptus:
+http://http://open.eucalyptus.com/
 
 ------------------------------------------
 Repository and Download
@@ -45,12 +51,14 @@ To try out TclCloud you must have an Amazon AWS account with an API access key a
 
 Note: TclCloud was developed and tested on tcl 8.6 on linux. I plan to support tcl 8.5 with TclOO and test on Windows.
 
+Example scripts are located under the samples directory. Change the access and secret key values to run the scripts.
 
 ------------------------------------------
 Installation
 ------------------------------------------
 
-Requirements - tcl 8.6 on linux, tcllib, TclCurl
+Requirements - tcl 8.5 with TclOO or tcl 8.6
+               tcllib, TclCurl
 
 Download the TclCloud from the Download button from the Git repository above. Unzip the contents into the lib/tclcloud directory in your tcl home directory. 
 Make sure you have tcllib and TclCurl installed too. 
@@ -61,19 +69,24 @@ Usage
 
 To create a new connection object, substitute your AWS provided access key and secret key. The connection new object will not attempt to create a connection to AWS, it simply creates the connection object for use.
 
-::tclcloud::connection new <aws access key> <aws secret key>
+::tclcloud::connection new <aws access key> <aws secret key> <endpoint>
 
 	aws access key - the AWS provided access key
 	aws secret key - the AWS provided secret key
+	endpoint - a key value pair consisting of a name and endpoint url for a Eucalyptus cloud
 
 Example:
 
 set awsconn [::tclcloud::connection new MYACCESSKEYKJREKJ MYSECRETKEYLKJDLLKJSDDKJF]
 
+or
+
+set eucaconn [::tclcloud::connection new MYACCESSKEYKJREKJ MYSECRETKEYLKJDLLKJSDDKJF {myeuca http://euca.myserver.net:8773/services/Eucalyptus}]
+
 
 To send a request to the AWS endpoint:
 
-<AWS connection object> call_aws <product> <region> <action> <parameters> <api version>
+<AWS connection object> call_aws <product> <region> <action> <parameters> <api version> 
 
 	product - the AWS product to manage, currently one of the following values: ec2 emr as rds sqs ses cw elb vpc iam ebs
 		ec2 - EC2
@@ -90,10 +103,15 @@ To send a request to the AWS endpoint:
 		sns - Simple Notification Service
 		cfn - Cloudformation
 	
-	region - the AWS region to interact with. This is product specific, see the following link for which regions apply to what products. 
+	region - For AWS: the AWS region to interact with. This is product specific, 
+		see the following link for which regions apply to what products. 
 		http://docs.amazonwebservices.com/general/latest/gr/index.html
 		
-		Currently one of the following values: us-east-1, us-west-1, eu-west-1, ap-southeast-1, ap-northeast-1 or leave blank for the default (typically us-east-1)
+		Currently one of the following values: us-east-1, us-west-1, 
+		eu-west-1, ap-southeast-1, ap-northeast-1 or leave blank for 
+		the default (typically us-east-1)
+	
+		For Eucalyptus: the endpoint name defined in the new connection.
 
 	action - this will correspond with the specific product API operation or action.
 		Examples include:
@@ -110,7 +128,7 @@ TODO
 ------------------------------------------
 
 	- add support for S3, Cloudfront, Route53, Import/Export
-	- certify tcl 8.5, Windows and Mac
+	- certify Windows and Mac
 	- incorporate XML results parser using tdom, to list and json
 	- more sample code
 	- add support for the Rackspace, vSphere, OpSource, etc. APIs

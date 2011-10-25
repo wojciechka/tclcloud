@@ -4,10 +4,11 @@ package require sha256
 package require base64
 package require TclOO
 package require TclCurl
+package require uri
 
 oo::class create tclcloud::connection {
 
-	constructor {key s_key} {
+	constructor {key s_key {endpoint {}}} {
 		my variable debug
 		my variable AWS_info
 		my variable AWS_address
@@ -48,6 +49,7 @@ oo::class create tclcloud::connection {
 		dict set AWS_address ec2 eu-west-1 address ec2.eu-west-1.amazonaws.com
 		dict set AWS_address ec2 ap-southeast-1 address ec2.ap-southeast-1.amazonaws.com
 		dict set AWS_address ec2 ap-northeast-1 address ec2.ap-northeast-1.amazonaws.com
+		dict set AWS_address ec2 ecc address ecc.eucalyptus.com:8773/services/Eucalyptus
 		dict set AWS_product emr version default 2009-03-31
 		dict set AWS_product ec2 version default 2011-07-15
 		dict set AWS_product sns version default 2010-03-31
@@ -63,6 +65,12 @@ oo::class create tclcloud::connection {
 		dict set AWS_product sdb version default 2009-04-15
 		dict set AWS_product r53 version default 2010-10-01
 		dict set AWS_product ebs version default 2010-12-01
+                if {"$endpoint" > ""} {
+                        set region [lindex $endpoint 0]
+                        set address [lindex $endpoint 1]
+                        dict set AWS_address ec2 $region address $address
+
+                }
 		set AWS_products [list ec2 emr as rds sqs ses cw elb vpc iam ebs]
 		set AWS_rest_products [list s3 cloudfront sdb r53]
 
@@ -110,11 +118,30 @@ oo::class create tclcloud::connection {
 		}
 		return [dict get [dict get [dict get $AWS_address $product] $region] address]
 	}
-	method Build_string_to_sign {aws_address querystring} {
+        method Build_string_to_sign {aws_address querystring} {
 
-		return "GET\n$aws_address\n/\n$querystring"
+                set uri_list [uri::split http://$aws_address]
+                set path ""
+                set found -1
+                foreach {key val} $uri_list {
+                        if {"$key" == "path" && "$val" > ""} {
+                                set path "/$val/"
+                                incr found
+                        } elseif {"$key" == "host"} {
+                                set aws_address $val
+                                incr found
+                        }
+                        if {$found == 1} {
+                                break
+                        }
+                }
+                if {"$path" == ""} {
+                        set path "/"
+                }
 
-	}
+                return "GET\n$aws_address\n$path\n$querystring"
+
+        }
 
 	method Build_querystring {product action params version} {
 
@@ -136,7 +163,7 @@ oo::class create tclcloud::connection {
 			} else {
 				set values(Version) [my Get_version $product]
 			}
-			set values(Timestamp) [clock format [clock seconds] -gmt 1 -format "%Y-%m-%dT%H:%M:%SZ"]
+			set values(Timestamp) [clock format [clock seconds] -gmt 1 -format "%Y-%m-%dT%H:%M:%S"]
 		} else {
 			lappend param_names Action
 		}
@@ -172,8 +199,15 @@ oo::class create tclcloud::connection {
 	method Perform_query {url header} {
 		variable debug
 		set tok [curl::init]
-		$tok configure -url $url -httpheader $header -errorbuffer err_buf -headervar head_buf -bodyvar body_buf -verbose 0
-		$tok perform
+		set err_buf ""
+		set head_buf ""
+		set body_buf ""
+		set err_msg ""
+		$tok configure -url $url -httpheader $header -errorbuffer err_buf -headervar head_buf -bodyvar body_buf -verbose 0 -sslverifypeer 0
+		catch {$tok perform} err_msg
+		if {$debug == 1} {
+			puts "Return header:\n$head_buf\nBody:\n$body_buf\nError:\n$err_buf\n$err_msg"
+		}
 		if {[$tok getinfo responsecode] != 200} {
 			set debug 1
 		}
@@ -209,7 +243,10 @@ oo::class create tclcloud::connection {
 			lappend header "X-Amzn-Authorization: $xamzn_header"
 		} else {
 			set signature [my Encode_url [my Sign_string [my Build_string_to_sign $aws_address $querystring]]]
+			set date_header [clock format [clock seconds] -gmt 1 -format "%a, %e %b %Y %H:%M:%S +0000"]
 			set header ""
+			lappend header "Date: $date_header"
+			lappend header "User-Agent: Tclcloud lib"
 		}
 		set url [my Build_url $product $aws_address $querystring $signature $action]
 		set results [my Perform_query $url $header]
