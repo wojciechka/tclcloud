@@ -29,6 +29,7 @@ oo::class create tclcloud::connection {
 		dict set AWS_address cfn default address cloudformation.us-east-1.amazonaws.com
 		dict set AWS_address cfn us-east-1 address cloudformation.us-east-1.amazonaws.com
 		dict set AWS_address cfn us-west-1 address cloudformation.us-west-1.amazonaws.com
+		dict set AWS_address cfn us-west-2 address cloudformation.us-west-2.amazonaws.com
 		dict set AWS_address cfn eu-west-1 address cloudformation.eu-west-1.amazonaws.com
 		dict set AWS_address cfn ap-southeast-1 address cloudformation.ap-southeast-1.amazonaws.com
 		dict set AWS_address cfn ap-northeast-1 address cloudformation.ap-northeast-1.amazonaws.com
@@ -38,6 +39,7 @@ oo::class create tclcloud::connection {
 		dict set AWS_address sns default address sns.us-east-1.amazonaws.com
 		dict set AWS_address sns us-east-1 address sns.us-east-1.amazonaws.com
 		dict set AWS_address sns us-west-1 address sns.us-west-1.amazonaws.com
+		dict set AWS_address sns us-west-2 address sns.us-west-2.amazonaws.com
 		dict set AWS_address sns eu-west-1 address sns.eu-west-1.amazonaws.com
 		dict set AWS_address sns eu-west-1 address sns.eu-west-1.amazonaws.com
 		dict set AWS_address sns ap-southeast-1 address sns.ap-southeast-1.amazonaws.com
@@ -45,6 +47,7 @@ oo::class create tclcloud::connection {
 		dict set AWS_address ec2 default address ec2.amazonaws.com
 		dict set AWS_address ec2 us-east-1 address ec2.us-east-1.amazonaws.com
 		dict set AWS_address ec2 us-west-1 address ec2.us-west-1.amazonaws.com
+		dict set AWS_address ec2 us-west-2 address ec2.us-west-2.amazonaws.com
 		dict set AWS_address ec2 eu-west-1 address ec2.eu-west-1.amazonaws.com
 		dict set AWS_address ec2 eu-west-1 address ec2.eu-west-1.amazonaws.com
 		dict set AWS_address ec2 ap-southeast-1 address ec2.ap-southeast-1.amazonaws.com
