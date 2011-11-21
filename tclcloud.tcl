@@ -17,14 +17,57 @@ oo::class create tclcloud::connection {
 		my variable AWS_rest_products
 		set debug 0
 		dict set AWS_address emr default address elasticmapreduce.amazonaws.com
+		dict set AWS_address emr us-east-1 address elasticmapreduce.us-east-1.amazonaws.com
+		dict set AWS_address emr us-west-1 address elasticmapreduce.us-west-1.amazonaws.com
+		dict set AWS_address emr us-west-2 address elasticmapreduce.us-west-2.amazonaws.com
+		dict set AWS_address emr eu-west-1 address elasticmapreduce.eu-west-1.amazonaws.com
+		dict set AWS_address emr ap-southeast-1 address elasticmapreduce.ap-southeast-1.amazonaws.com
+		dict set AWS_address emr ap-northeast-1 address elasticmapreduce.ap-northeast-1.amazonaws.com
 		dict set AWS_address s3 default address s3.amazonaws.com
 		dict set AWS_address ses default address email.us-east-1.amazonaws.com
+		dict set AWS_address ses us-east-1 address email.us-east-1.amazonaws.com
 		dict set AWS_address rds default address rds.amazonaws.com
+		dict set AWS_address rds us-east-1 address rds.us-east-1.amazonaws.com
+		dict set AWS_address rds us-west-1 address rds.us-west-1.amazonaws.com
+		dict set AWS_address rds us-west-2 address rds.us-west-2.amazonaws.com
+		dict set AWS_address rds eu-west-1 address rds.eu-west-1.amazonaws.com
+		dict set AWS_address rds ap-southeast-1 address rds.ap-southeast-1.amazonaws.com
+		dict set AWS_address rds ap-northeast-1 address rds.ap-northeast-1.amazonaws.com
 		dict set AWS_address as default address autoscaling.amazonaws.com
+		dict set AWS_address as us-east-1 address autoscaling.us-east-1.amazonaws.com
+		dict set AWS_address as us-west-1 address autoscaling.us-west-1.amazonaws.com
+		dict set AWS_address as us-west-2 address autoscaling.us-west-2.amazonaws.com
+		dict set AWS_address as eu-west-1 address autoscaling.eu-west-1.amazonaws.com
+		dict set AWS_address as ap-southeast-1 address autoscaling.ap-southeast-1.amazonaws.com
+		dict set AWS_address as ap-northeast-1 address autoscaling.ap-northeast-1.amazonaws.com
 		dict set AWS_address sqs default address sqs.us-east-1.amazonaws.com
+		dict set AWS_address sqs us-east-1 address sqs.us-east-1.amazonaws.com
+		dict set AWS_address sqs us-west-1 address sqs.us-west-1.amazonaws.com
+		dict set AWS_address sqs us-west-2 address sqs.us-west-2.amazonaws.com
+		dict set AWS_address sqs eu-west-1 address sqs.eu-west-1.amazonaws.com
+		dict set AWS_address sqs ap-southeast-1 address sqs.ap-southeast-1.amazonaws.com
+		dict set AWS_address sqs ap-northeast-1 address sqs.ap-northeast-1.amazonaws.com
 		dict set AWS_address cw default address monitoring.us-east-1.amazonaws.com
+		dict set AWS_address cw us-east-1 address monitoring.us-east-1.amazonaws.com
+		dict set AWS_address cw us-west-1 address monitoring.us-west-1.amazonaws.com
+		dict set AWS_address cw us-west-2 address monitoring.us-west-2.amazonaws.com
+		dict set AWS_address cw eu-west-1 address monitoring.eu-west-1.amazonaws.com
+		dict set AWS_address cw ap-southeast-1 address monitoring.ap-southeast-1.amazonaws.com
+		dict set AWS_address cw ap-northeast-1 address monitoring.ap-northeast-1.amazonaws.com
 		dict set AWS_address elb default address elasticloadbalancing.amazonaws.com
+		dict set AWS_address elb us-east-1 address elasticloadbalancing.us-east-1.amazonaws.com
+		dict set AWS_address elb us-west-1 address elasticloadbalancing.us-west-1.amazonaws.com
+		dict set AWS_address elb us-west-2 address elasticloadbalancing.us-west-2.amazonaws.com
+		dict set AWS_address elb eu-west-1 address elasticloadbalancing.eu-west-1.amazonaws.com
+		dict set AWS_address elb ap-southeast-1 address elasticloadbalancing.ap-southeast-1.amazonaws.com
+		dict set AWS_address elb ap-northeast-1 address elasticloadbalancing.ap-northeast-1.amazonaws.com
 		dict set AWS_address vpc default address ec2.amazonaws.com
+		dict set AWS_address vpc us-east-1 address ec2.us-east-1.amazonaws.com
+		dict set AWS_address vpc us-west-1 address ec2.us-west-1.amazonaws.com
+		dict set AWS_address vpc us-west-2 address ec2.us-west-2.amazonaws.com
+		dict set AWS_address vpc eu-west-1 address ec2.eu-west-1.amazonaws.com
+		dict set AWS_address vpc ap-southeast-1 address ec2.ap-southeast-1.amazonaws.com
+		dict set AWS_address vpc ap-northeast-1 address ec2.ap-northeast-1.amazonaws.com
 		dict set AWS_address iam default address iam.amazonaws.com
 		dict set AWS_address cfn default address cloudformation.us-east-1.amazonaws.com
 		dict set AWS_address cfn us-east-1 address cloudformation.us-east-1.amazonaws.com
@@ -34,8 +77,15 @@ oo::class create tclcloud::connection {
 		dict set AWS_address cfn ap-southeast-1 address cloudformation.ap-southeast-1.amazonaws.com
 		dict set AWS_address cfn ap-northeast-1 address cloudformation.ap-northeast-1.amazonaws.com
 		dict set AWS_address sdb default address sdb.amazonaws.com
+		dict set AWS_address sdb us-east-1 address sdb.amazonaws.com
+		dict set AWS_address sdb us-west-1 address sdb.us-west-1.amazonaws.com
+		dict set AWS_address sdb us-west-2 address sdb.us-west-2.amazonaws.com
+		dict set AWS_address sdb eu-west-1 address sdb.eu-west-1.amazonaws.com
+		dict set AWS_address sdb ap-southeast-1 address sdb.ap-southeast-1.amazonaws.com
+		dict set AWS_address sdb ap-northeast-1 address sdb.ap-northeast-1.amazonaws.com
 		dict set AWS_address r53 default address r53.amazonaws.com
 		dict set AWS_address ebs default address elasticbeanstalk.us-east-1.amazonaws.com 
+		dict set AWS_address ebs us-east-1 address elasticbeanstalk.us-east-1.amazonaws.com 
 		dict set AWS_address sns default address sns.us-east-1.amazonaws.com
 		dict set AWS_address sns us-east-1 address sns.us-east-1.amazonaws.com
 		dict set AWS_address sns us-west-1 address sns.us-west-1.amazonaws.com
