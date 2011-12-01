@@ -1,4 +1,4 @@
-TclCloud v1.0.1
+TclCloud v1.3
 
 ------------------------------------------
 Description 
@@ -17,6 +17,8 @@ Example use cases include the following:
 	- creating, submitting and monitoring Elastic Map Reduce (Hadoop) jobs
 	- configuring VPC networks
 	- and so on ...
+
+NOTE: The commands in version 1.3 of Tclcloud have changed somewhat from previous versions. Tclcloud no longer uses TclOO, therefore scripts written for previous releases will need to be reworked slightly. 
 
 For more information on the Amazon AWS cloud products, see:
 http://aws.amazon.com/products/
@@ -49,7 +51,7 @@ http://aws.amazon.com/documentation/
 
 To try out TclCloud you must have an Amazon AWS account with an API access key and secret key. 
 
-Note: TclCloud was developed and tested on tcl 8.6 on linux. I plan to support tcl 8.5 with TclOO and test on Windows.
+Note: TclCloud has been tested on linux and mac. Windows should also work fine. 
 
 Example scripts are located under the samples directory. Change the access and secret key values to run the scripts.
 
@@ -57,11 +59,10 @@ Example scripts are located under the samples directory. Change the access and s
 Installation
 ------------------------------------------
 
-Requirements - tcl 8.5 with TclOO or tcl 8.6
-               tcllib, TclCurl
+Requirements - tcl 8.5, tcllib
 
 Download the TclCloud from the Download button from the Git repository above. Unzip the contents into the lib/tclcloud directory in your tcl home directory. 
-Make sure you have tcllib and TclCurl installed too. 
+Make sure you have tcllib installed.
 
 ------------------------------------------
 Usage
@@ -69,24 +70,26 @@ Usage
 
 To create a new connection object, substitute your AWS provided access key and secret key. The connection new object will not attempt to create a connection to AWS, it simply creates the connection object for use.
 
-::tclcloud::connection new <aws access key> <aws secret key> <endpoint>
+tclcloud::configure <provider> <access key> <secret key> <endpoint list>
 
-	aws access key - the AWS provided access key
-	aws secret key - the AWS provided secret key
-	endpoint - a key value pair consisting of a name and endpoint url for a Eucalyptus cloud
+	provider - name of the cloud provider (aws, eucalyptus) 
+	access key - the AWS or Eucalyptus access key
+	secret key - the AWS or Eucalyptus secret key
+	endpoint list - a list comprising of a endpoint name (aka region), endpoint address and protocol. 
+			Not required for AWS, required for Eucalyptus
 
-Example:
+AWS Example:
 
-set awsconn [::tclcloud::connection new MYACCESSKEYKJREKJ MYSECRETKEYLKJDLLKJSDDKJF]
+tclcloud::configure aws MYACCESSKEYKJREKJ MYSECRETKEYLKJDLLKJSDDKJF {}
 
-or
+Eucalyptus Example:
 
-set eucaconn [::tclcloud::connection new MYACCESSKEYKJREKJ MYSECRETKEYLKJDLLKJSDDKJF {myeuca http://euca.myserver.net:8773/services/Eucalyptus}]
+tclcloud::configure eucalyptus MYACCESSKEYKJREKJ MYSECRETKEYLKJDLLKJSDDKJF {myeuca euca.myserver.net:8773/services/Eucalyptus http}
 
 
-To send a request to the AWS endpoint:
+To send a request to the AWS or Eucalyptus endpoint:
 
-<AWS connection object> call_aws <product> <region> <action> <parameters> <api version> 
+tclcloud::call <product> <region> <action> <parameters> <api version> 
 
 	product - the AWS product to manage, currently one of the following values: ec2 emr as rds sqs ses cw elb vpc iam ebs
 		ec2 - EC2
@@ -111,7 +114,7 @@ To send a request to the AWS endpoint:
 		eu-west-1, ap-southeast-1, ap-northeast-1 or leave blank for 
 		the default (typically us-east-1)
 	
-		For Eucalyptus: the endpoint name defined in the new connection.
+		For Eucalyptus: the endpoint name defined in the configure command
 
 	action - this will correspond with the specific product API operation or action.
 		Examples include:
@@ -131,7 +134,7 @@ TODO
 	- certify Windows and Mac
 	- incorporate XML results parser using tdom, to list and json
 	- more sample code
-	- add support for the Rackspace, vSphere, OpSource, etc. APIs
+	- add support for the OpenStack, Rackspace, vSphere, OpSource, etc. APIs
 
 ------------------------------------------
 Samples
@@ -141,146 +144,19 @@ To launch an Ubuntu instance, default region and api version:
 
 package require tclcloud
 
-set awsconn [::tclcloud::connection new MYACCESSKEYKJREKJ MYSECRETKEYLKJDLLKJSDDKJF4]
+tclcloud::configure aws MYACCESSKEYKJREKJ MYSECRETKEYLKJDLLKJSDDKJF4 {}
 
-set return_value [$awsconn call_aws ec2 {} RunInstances {ImageId ami-1aad5273 MinCount 1 MaxCount 1 KeyName CentiviaKey SecurityGroup.1 {MySQL intranet} InstanceType t1.micro Placement.AvailabilityZone us-east-1d} {}]
+set return_value [tclcloud::call ec2 {} RunInstances {ImageId ami-1aad5273 MinCount 1 MaxCount 1 KeyName myKey SecurityGroup.1 default InstanceType t1.micro Placement.AvailabilityZone us-east-1d} {}]
 
 puts $return_value
 
-<?xml version="1.0" encoding="UTF-8"?>
-<RunInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-05-15/">
-    <requestId>40bfb94e-ecb8-4f49-b6ee-24b37f94ba04</requestId>
-    <reservationId>r-0d3b3061</reservationId>
-    <ownerId>001825975926</ownerId>
-    <groupSet>
-        <item>
-            <groupId>sg-5aabe433</groupId>
-            <groupName>MySQL intranet</groupName>
-        </item>
-    </groupSet>
-    <instancesSet>
-        <item>
-            <instanceId>i-912f2bff</instanceId>
-            <imageId>ami-1aad5273</imageId>
-            <instanceState>
-                <code>0</code>
-                <name>pending</name>
-            </instanceState>
-            <privateDnsName/>
-            <dnsName/>
-            <reason/>
-            <keyName>CentiviaKey</keyName>
-            <amiLaunchIndex>0</amiLaunchIndex>
-            <productCodes/>
-            <instanceType>t1.micro</instanceType>
-            <launchTime>2011-07-01T03:40:13.000Z</launchTime>
-            <placement>
-                <availabilityZone>us-east-1d</availabilityZone>
-                <groupName/>
-                <tenancy>default</tenancy>
-            </placement>
-            <kernelId>aki-427d952b</kernelId>
-            <monitoring>
-                <state>disabled</state>
-            </monitoring>
-            <groupSet>
-                <item>
-                    <groupId>sg-5aabe433</groupId>
-                    <groupName>MySQL intranet</groupName>
-                </item>
-            </groupSet>
-            <stateReason>
-                <code>pending</code>
-                <message>pending</message>
-            </stateReason>
-            <rootDeviceType>ebs</rootDeviceType>
-            <rootDeviceName>/dev/sda1</rootDeviceName>
-            <blockDeviceMapping/>
-            <virtualizationType>paravirtual</virtualizationType>
-            <clientToken/>
-            <hypervisor>xen</hypervisor>
-        </item>
-    </instancesSet>
-</RunInstancesResponse>
 
-
-To get a list of my machine images, default region and api version:
+To get a list of my machine images for Eucalyptus:
 
 package require tclcloud
 
-set awsconn [::tclcloud::connection new MYACCESSKEYKJREKJ MYSECRETKEYLKJDLLKJSDDKJF]
+tclcloud::configure eucalyptus MYACCESSKEYKJREKJ MYSECRETKEYLKJDLLKJSDDKJF {myeuca euca.myserver.net:8773/services/Eucalyptus http}
 
-set return_value [$awsconn call_aws ec2 {} DescribeImages {Owner.1 self} {}]
+set return_value [tclcloud::call ec2 {} DescribeImages {Owner.1 self} {}]
 
 puts $return_value
-
-<DescribeImagesResponse xmlns="http://ec2.amazonaws.com/doc/2011-05-15/">
-    <requestId>c10b0d57-964c-452e-a2ca-77aa8c49a65c</requestId>
-    <imagesSet>
-        <item>
-            <imageId>ami-3012e159</imageId>
-            <imageLocation>001825975926/Windows IIS SQL Server Small</imageLocation>
-            <imageState>available</imageState>
-            <imageOwnerId>001825975926</imageOwnerId>
-            <isPublic>false</isPublic>
-            <architecture>x86_64</architecture>
-            <imageType>machine</imageType>
-            <platform>windows</platform>
-            <name>Windows IIS SQL Server Small</name>
-            <description>Windows IIS SQL Server Small</description>
-            <rootDeviceType>ebs</rootDeviceType>
-            <rootDeviceName>/dev/sda1</rootDeviceName>
-            <blockDeviceMapping>
-                <item>
-                    <deviceName>/dev/sda1</deviceName>
-                    <ebs>
-                        <snapshotId>snap-345e8058</snapshotId>
-                        <volumeSize>30</volumeSize>
-                        <deleteOnTermination>true</deleteOnTermination>
-                    </ebs>
-                </item>
-            </blockDeviceMapping>
-            <virtualizationType>hvm</virtualizationType>
-            <tagSet>
-                <item>
-                    <key>Name</key>
-                    <value>Windows 2008 64 Dev Instance</value>
-                </item>
-            </tagSet>
-            <hypervisor>xen</hypervisor>
-        </item>
-        <item>
-            <imageId>ami-40659629</imageId>
-            <imageLocation>001825975926/Informix Linux Dev</imageLocation>
-            <imageState>available</imageState>
-            <imageOwnerId>001825975926</imageOwnerId>
-            <isPublic>false</isPublic>
-            <architecture>i386</architecture>
-            <imageType>machine</imageType>
-            <name>Informix Linux Dev</name>
-            <description>Informix Linux Dev</description>
-            <rootDeviceType>ebs</rootDeviceType>
-            <rootDeviceName>/dev/sda1</rootDeviceName>
-            <blockDeviceMapping>
-                <item>
-                    <deviceName>/dev/sda1</deviceName>
-                    <ebs>
-                        <snapshotId>snap-182ef074</snapshotId>
-                        <volumeSize>10</volumeSize>
-                        <deleteOnTermination>true</deleteOnTermination>
-                    </ebs>
-                </item>
-            </blockDeviceMapping>
-            <virtualizationType>paravirtual</virtualizationType>
-            <tagSet>
-                <item>
-                    <key>Name</key>
-                    <value>Linux Informix</value>
-                </item>
-            </tagSet>
-            <hypervisor>xen</hypervisor>
-        </item>
-        <item>
-    </imagesSet>
-</DescribeImagesResponse>
-

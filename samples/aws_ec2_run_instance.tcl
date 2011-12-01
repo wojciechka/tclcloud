@@ -18,10 +18,11 @@
 ###  Change the following lines to use your AWS Access and
 ###  Secret Key
 
-set access_key CHANGE_ME
-set secret_key CHANGE_ME
+set access_key MYACCESSKEY
+set secret_key MYSECRETKEY
 
-package require tclcloud
+lappend auto_path ../
+package require tclcloud 
 package require tdom
 
 proc strip_namespaces {xml} {
@@ -42,13 +43,13 @@ proc get_xpath_value {xml path} {
 
 ### define aws connection
 
-set ::tclcloud::debug 1
-set conn [::tclcloud::connection new $access_key $secret_key]
+set tclcloud::debug 0
+set conn [tclcloud::configure aws $access_key $secret_key {}]
 
 ### find bitnami image id
 
 lappend args Filter.1.Name architecture Filter.1.Value.1 x86_64 Filter.2.Name root-device-type Filter.2.Value.1 ebs Filter.3.Name name Filter.3.Value.1 {bitnami-wordpress-3.2.1-1-linux-x64-ubuntu-10.04-ebs}
-set result [$conn call_aws ec2 {} DescribeImages $args]
+set result [tclcloud::call ec2 {} DescribeImages $args]
 unset args
 #puts $result
 set result [strip_namespaces $result]
@@ -59,7 +60,7 @@ puts "The image to start is $imageId"
 ### start a bitnami wordpress instance
 
 lappend args ImageId $imageId InstanceType t1.micro MinCount 1 MaxCount 1
-set result [$conn call_aws ec2 {} RunInstances $args]
+set result [tclcloud::call ec2 {} RunInstances $args]
 #puts $result
 set result [strip_namespaces $result]
 set instanceId [get_xpath_value $result //instanceId]
@@ -73,7 +74,7 @@ after 5000
 while {"$state" == "pending"} {
 	unset args
 	lappend args InstanceId $instanceId 
-	set result [$conn call_aws ec2 {} DescribeInstances $args]
+	set result [tclcloud::call ec2 {} DescribeInstances $args]
 	set result [strip_namespaces $result]
 	#puts $result
 	set state [get_xpath_value $result //instanceState/name]
@@ -92,7 +93,7 @@ while {"$state" == "pending"} {
 set privateAddress [get_xpath_value $result //privateDnsName]
 set publicAddress [get_xpath_value $result //dnsName]
 puts "the private address is $privateAddress, public address is $publicAddress"
-
+puts "we will wait for 60 seconds for the server to come up, then test the url ..."
 
 ### test the webserver, wait 60 seconds or so for services to come up
 
@@ -101,5 +102,3 @@ package require http
 set tok [::http::geturl "http://$publicAddress" -timeout 60000]
 puts [::http::data $tok]
 ::http::cleanup $tok
-
-$conn destroy
