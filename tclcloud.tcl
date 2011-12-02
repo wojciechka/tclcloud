@@ -3,7 +3,7 @@
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 # -------------------------------------------------------------------------
 
-package provide tclcloud 1.3
+package provide tclcloud 1.0.3
 
 package require Tcl 8.5
 package require sha256
