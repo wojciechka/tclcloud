@@ -236,7 +236,7 @@ proc tclcloud::Build_querystring {product action params version} {
 	### according to the AWS api docs, the string to sign must be byte order by param name
 	if {"$product" eq "s3"} {
 		upvar timestamp timestamp
-		set timestamp [expr [clock seconds] + 60]
+		set timestamp [expr {[clock seconds] + 60}]
 		set values(AWSAccessKeyId) [dict get $AWS_info a_key]
 		set values(Expires) $timestamp
 		lappend param_names AWSAccessKeyId Expires
@@ -290,7 +290,7 @@ proc tclcloud::Perform_query {url header} {
 	set head_buf ""
 	set body_buf ""
 	set err_msg ""
-	catch {set token [::http::geturl $url -headers $header -timeout [expr 10 * 1000]]} error_code
+	catch {set token [::http::geturl $url -headers $header -timeout [expr {10 * 1000}]]} error_code
 	if {[string match "::http::*" $error_code] == 0} {
 		if {[string match "error reading*software caused connection abort" $error_code]} {
 			error "error: Cloud endpoint refused connection. Verfiy that address, port and protocol (http or https) are valid.\012url:\012\012$url"
