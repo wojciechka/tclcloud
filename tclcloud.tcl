@@ -6,6 +6,7 @@
 package provide tclcloud 1.0.3
 
 package require Tcl 8.5
+package require sha1
 package require sha256
 package require base64
 package require uri
@@ -31,6 +32,13 @@ namespace eval tclcloud {
 	dict set AWS_address emr ap-southeast-1 address elasticmapreduce.ap-southeast-1.amazonaws.com
 	dict set AWS_address emr ap-northeast-1 address elasticmapreduce.ap-northeast-1.amazonaws.com
 	dict set AWS_address s3 default address s3.amazonaws.com
+	dict set AWS_address s3 us-east-1 address s3-us-east-1.amazonaws.com
+	dict set AWS_address s3 us-west-1 address s3-us-west-1.amazonaws.com
+	dict set AWS_address s3 us-west-2 address s3-us-west-2.amazonaws.com
+	dict set AWS_address s3 eu-west-1 address s3-external-3.amazonaws.com
+	dict set AWS_address s3 ap-southeast-1 address s3-ap-southeast-1.amazonaws.com
+	dict set AWS_address s3 ap-northeast-1 address s3-ap-northeast-1.amazonaws.com
+	dict set AWS_address s3 sa-east-1 address s3-sa-east-1.amazonaws.com
 	dict set AWS_address ses default address email.us-east-1.amazonaws.com
 	dict set AWS_address ses us-east-1 address email.us-east-1.amazonaws.com
 	dict set AWS_address rds default address rds.amazonaws.com
@@ -129,7 +137,7 @@ namespace eval tclcloud {
 
 	lappend supported_providers aws eucalyptus
 
-        ::http::register https 443 ::tls::socket
+	::http::register https 443 ::tls::socket
 }
 proc tclcloud::configure {provider key s_key {endpoint {}}} {
 
@@ -180,9 +188,9 @@ proc tclcloud::Encode_url {orig} {
     }
     return $res
 }
-proc tclcloud::Sign_string {string_to_sign} {
+proc tclcloud::Sign_string {string_to_sign {algorithm sha2}} {
 	variable AWS_info
-	set signed [::sha2::hmac  [dict get $AWS_info secret_key] $string_to_sign]
+	set signed [::${algorithm}::hmac  [dict get $AWS_info secret_key] $string_to_sign]
 	set signed [binary format H* $signed]
 	set signed [string trim [::base64::encode $signed]]
 	return $signed
@@ -212,7 +220,7 @@ proc tclcloud::Build_string_to_sign {aws_address querystring} {
 	set found -1
 	foreach {key val} $uri_list {
 		if {"$key" eq "path" && "$val" ne ""} {
-			set path "/$val/"
+			set path "/$val"
 			incr found
 		} elseif {"$key" eq "host"} {
 			set aws_address $val
@@ -230,7 +238,7 @@ proc tclcloud::Build_string_to_sign {aws_address querystring} {
 
 }
 
-proc tclcloud::Build_querystring {product action params version} {
+proc tclcloud::Build_querystring {product action params extra} {
 
 	variable AWS_info
 	### according to the AWS api docs, the string to sign must be byte order by param name
@@ -245,8 +253,8 @@ proc tclcloud::Build_querystring {product action params version} {
 		set values(AWSAccessKeyId) [dict get $AWS_info a_key]
 		set values(SignatureMethod) HmacSHA256
 		set values(SignatureVersion) 2
-		if {"$version" ne ""} {
-			set values(Version) $version
+		if {"$extra" ne ""} {
+			set values(Version) $extra
 		} else {
 			set values(Version) [tclcloud::Get_version $product]
 		}
@@ -274,23 +282,34 @@ proc tclcloud::Build_querystring {product action params version} {
 proc tclcloud::HttpCallback {token} {
     upvar #0 $token state
 }
-proc tclcloud::Build_url {product address querystring signature action} {
+proc tclcloud::Build_url {product address querystring signature action {path ""}} {
 	variable AWS_protocol
 	if {"$product" eq "ses"} {
 		return "$AWS_protocol://$address/?$querystring"
 	} elseif {"$product" eq "r53"} {
 		return "$AWS_protocol://$address/$action"
+	} elseif {"$product" eq "s3"} {
+		return "$AWS_protocol://$address/$path"
+	} elseif {"$product" eq "sqs"} {
+		return "$AWS_protocol://$address?$querystring&Signature=$signature"
 	} else {
 		return "$AWS_protocol://$address/?$querystring&Signature=$signature"
 	}
 }
-proc tclcloud::Perform_query {url header} {
+proc tclcloud::Perform_query {url header {method GET} {data ""} {contenttype application/octet-stream} {timeout 10}} {
 	variable debug
 	set err_buf ""
 	set head_buf ""
 	set body_buf ""
 	set err_msg ""
-	catch {set token [::http::geturl $url -headers $header -timeout [expr {10 * 1000}]]} error_code
+	set cmd [list ::http::geturl $url -headers $header -method $method]
+	if {$timeout != 0} {
+		lappend cmd -timeout [expr {$timeout * 1000}] 
+	}
+	if {($method == "POST") || ($method == "PUT")} {
+		lappend cmd -type $contenttype -query $data
+	}
+	catch {set token [eval $cmd]} error_code
 	if {[string match "::http::*" $error_code] == 0} {
 		if {[string match "error reading*software caused connection abort" $error_code]} {
 			error "error: Cloud endpoint refused connection. Verfiy that address, port and protocol (http or https) are valid.\012url:\012\012$url"
@@ -298,21 +317,22 @@ proc tclcloud::Perform_query {url header} {
 			error "error: $error_code\012url:\012\012$url"
 		}
 	}
-	if {"[::http::status $token]" ne "ok" || [::http::ncode $token] != 200} {
+	# 204 is needed for S3 DELETE operation
+	if {"[::http::status $token]" ne "ok" || (([::http::ncode $token] != 200) && ([::http::ncode $token] != 204))} {
 		error "error: [::http::status $token] [::http::code $token] [::http::data $token]\012url:\012\012$url"
 	} else {
 		set body [::http::data $token]
 	}
 
-        if {[info exists token] == 1} {
-                ::http::cleanup $token
-        }
+	if {[info exists token] == 1} {
+		::http::cleanup $token
+	}
 	if {$debug == 1} {
 		puts "Return Body:\n$body"
 	}
 	return $body
 }
-proc tclcloud::call {product region action params {version ""}} {
+proc tclcloud::call {product region action params {extra ""} {extradatatype "application/octet-stream"}} {
 
 	variable AWS_products
 	variable AWS_info
@@ -320,12 +340,37 @@ proc tclcloud::call {product region action params {version ""}} {
 		error "error: product value is required"
 	}
 	set aws_address [tclcloud::Get_address $product $region]
-	set querystring [tclcloud::Build_querystring $product $action $params $version]
+	set querystring [tclcloud::Build_querystring $product $action $params $extra]
+	set method GET
+	set httpdata ""
+	set urlpath ""
+	set contenttype "application/x-www-form-urlencoded"
+	set httptimeout 10
+
 	if {"$product" eq "s3"} {
-		set signature [tclcloud::Sign_string "GET\n\n\n$timestamp\n\n/"]
+		set method $action
+		set params [split [string trimleft $params /] /]
+		set bucket [lindex $params 0]
+		set urlpath [join [lrange $params 1 end] /]
+		if {$method == "PUT"} {
+			set contenttype $extradatatype
+			set signaturetype $contenttype
+			set httpdata $extra
+		}  else  {
+			set signaturetype ""
+		}
+		if {($method != "DELETE") && ($method != "HEAD")} {
+			set httptimeout 0
+		}
 		set header ""
+		set date_header [clock format [clock seconds] -gmt 1 -format "%a, %e %b %Y %H:%M:%S +0000"]
+		lappend header "Date" $date_header
+		set signature "$method\n\n${signaturetype}\n$date_header\n/$bucket/$urlpath"
+		set signature [tclcloud::Sign_string $signature sha1]
+		lappend header "Authorization" "AWS [dict get $AWS_info a_key]:$signature"
+		set aws_address "$bucket.$aws_address"
 	} elseif {"$product" eq "r53"} {
-		set date_header [clock format [clock seconds] -format "%a, %e %b %Y %H:%M:%S +0000"]
+		set date_header [clock format [clock seconds] -gmt 1 -format "%a, %e %b %Y %H:%M:%S +0000"]
 		lappend header "Date: $date_header"
 		set signature [tclcloud::Sign_string $date_header]
 		set xamzn_header "AWS3-HTTPS AWSAccessKeyId=[dict get $AWS_info a_key],Algorithm=HmacSHA256,Signature=$signature"
@@ -336,6 +381,15 @@ proc tclcloud::call {product region action params {version ""}} {
 		set signature [tclcloud::Sign_string $date_header]
 		set xamzn_header "AWS3-HTTPS AWSAccessKeyId=[dict get $AWS_info a_key],Algorithm=HmacSHA256,Signature=$signature"
 		lappend header "X-Amzn-Authorization: $xamzn_header"
+	} elseif {"$product" eq "sqs"} {
+		append aws_address "/[dict get $params OwnerId]/[dict get $params QueueName]"
+		dict unset params QueueName
+		dict unset params OwnerId
+		set signature [tclcloud::Encode_url [tclcloud::Sign_string [tclcloud::Build_string_to_sign $aws_address $querystring]]]
+		set date_header [clock format [clock seconds] -gmt 1 -format "%a, %e %b %Y %H:%M:%S +0000"]
+		set header ""
+		lappend header "Date: $date_header"
+		lappend header "User-Agent: Tclcloud lib"
 	} else {
 		set signature [tclcloud::Encode_url [tclcloud::Sign_string [tclcloud::Build_string_to_sign $aws_address $querystring]]]
 		set date_header [clock format [clock seconds] -gmt 1 -format "%a, %e %b %Y %H:%M:%S +0000"]
@@ -343,7 +397,7 @@ proc tclcloud::call {product region action params {version ""}} {
 		lappend header "Date: $date_header"
 		lappend header "User-Agent: Tclcloud lib"
 	}
-	set url [tclcloud::Build_url $product $aws_address $querystring $signature $action]
-	set results [tclcloud::Perform_query $url $header]
+	set url [tclcloud::Build_url $product $aws_address $querystring $signature $action $urlpath]
+	set results [tclcloud::Perform_query $url $header $method $httpdata $contenttype $httptimeout]
 	return $results
 }
