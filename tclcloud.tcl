@@ -382,9 +382,13 @@ proc tclcloud::call {product region action params {extra ""} {extradatatype "app
 		set xamzn_header "AWS3-HTTPS AWSAccessKeyId=[dict get $AWS_info a_key],Algorithm=HmacSHA256,Signature=$signature"
 		lappend header "X-Amzn-Authorization: $xamzn_header"
 	} elseif {"$product" eq "sqs"} {
-		append aws_address "/[dict get $params OwnerId]/[dict get $params QueueName]"
-		dict unset params QueueName
-		dict unset params OwnerId
+                if {[dict exists $params OwnerId] && [dict exists $params QueueName]} {
+		    append aws_address "/[dict get $params OwnerId]/[dict get $params QueueName]"
+		    dict unset params QueueName
+		    dict unset params OwnerId
+                }  else  {
+		    append aws_address "/"
+                }
 		set signature [tclcloud::Encode_url [tclcloud::Sign_string [tclcloud::Build_string_to_sign $aws_address $querystring]]]
 		set date_header [clock format [clock seconds] -gmt 1 -format "%a, %e %b %Y %H:%M:%S +0000"]
 		set header ""
