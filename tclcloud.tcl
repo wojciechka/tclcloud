@@ -370,7 +370,7 @@ proc tclcloud::call {product region action params {extra ""} {extradatatype "app
 		lappend header "Authorization" "AWS [dict get $AWS_info a_key]:$signature"
 		set aws_address "$bucket.$aws_address"
                 if {($method == "GET") && ($extra != "")} {
-                        set urlpath "$urlpath?[http::formatQuery {*}$extra]
+                        set urlpath "$urlpath?[http::formatQuery {*}$extra]"
                 }
 	} elseif {"$product" eq "r53"} {
 		set date_header [clock format [clock seconds] -gmt 1 -format "%a, %e %b %Y %H:%M:%S +0000"]
